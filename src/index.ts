@@ -51,7 +51,13 @@ const routes: Route[] = [
       const titulo = body.titulo;
       const autorId = body.autorId;
 
-      const autor = db.query("SELECT * FROM autores WHERE id = ?").get(autorId);
+      const autor = db
+        .query("SELECT * FROM autores WHERE id = ?")
+        .get(autorId) as {
+        id: number;
+        nome: string;
+        orcid: string | null;
+      } | null;
 
       if (!autor) {
         return Response.json(
@@ -112,9 +118,15 @@ const routes: Route[] = [
 
       const livro = db
         .query("SELECT * FROM livros WHERE id = ?")
-        .get(result.lastInsertRowid as number);
+        .get(result.lastInsertRowid as number) as Record<string, unknown>;
 
-      return Response.json(livro, { status: 201 });
+      return Response.json(
+        { ...livro, autor: autor.nome },
+        {
+          status: 201,
+          headers: { Location: `/livros/${isbn}` },
+        },
+      );
     },
   },
   {
