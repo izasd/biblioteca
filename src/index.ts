@@ -40,13 +40,12 @@ const routes: Route[] = [
   {
     method: "POST",
     pattern: "/livros",
-    handler: async (request) => {
+      handler: async (request) => {
       const body = (await request.json()) as {
         isbn: string;
         titulo: string;
         autorId: number;
         numeroRegistro: string;
-        dataCatalogacao: string;
       };
 
       const autor = db
@@ -68,10 +67,12 @@ const routes: Route[] = [
         );
       }
 
+      const hoje = new Date().toISOString().slice(0, 10);
+
       const result = db.run(
         `INSERT INTO livros (numero_registro, isbn, titulo, autor_id, data_catalogacao)
          VALUES (?, ?, ?, ?, ?)`,
-        [body.numeroRegistro, body.isbn, body.titulo, body.autorId, body.dataCatalogacao],
+        [body.numeroRegistro, body.isbn, body.titulo, body.autorId, hoje],
       );
 
       const livro = db
