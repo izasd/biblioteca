@@ -40,24 +40,29 @@ const routes: Route[] = [
   {
     method: "POST",
     pattern: "/livros",
-      handler: async (request) => {
+    handler: async (request) => {
       const body = (await request.json()) as {
         isbn: string;
         titulo: string;
         autorId: number;
       };
 
-      const autor = db
-        .query("SELECT * FROM autores WHERE id = ?")
-        .get(body.autorId);
+      const isbn = body.isbn.replace(/[^0-9]/g, "");
+      const titulo = body.titulo;
+      const autorId = body.autorId;
+
+      const autor = db.query("SELECT * FROM autores WHERE id = ?").get(autorId);
 
       if (!autor) {
-        return Response.json({ error: "Autor não cadastrado" }, { status: 404 });
+        return Response.json(
+          { error: "Autor não cadastrado" },
+          { status: 404 },
+        );
       }
 
       const livrosDoAutor = db
         .query("SELECT COUNT(*) AS total FROM livros WHERE autor_id = ?")
-        .get(body.autorId) as { total: number };
+        .get(autorId) as { total: number };
 
       if (livrosDoAutor.total >= 3) {
         return Response.json(
@@ -68,20 +73,17 @@ const routes: Route[] = [
 
       const jaExiste = db
         .query("SELECT 1 FROM livros WHERE isbn = ?")
-        .get(body.isbn);
+        .get(isbn);
 
       if (jaExiste) {
-        return Response.json(
-          { error: "Livro já cadastrado" },
-          { status: 409 },
-        );
+        return Response.json({ error: "Livro já cadastrado" }, { status: 409 });
       }
 
       const mesmoTitulo = db
         .query(
           "SELECT 1 FROM livros WHERE autor_id = ? AND lower(titulo) = lower(?)",
         )
-        .get(body.autorId, body.titulo);
+        .get(autorId, titulo);
 
       if (mesmoTitulo) {
         return Response.json(
@@ -105,7 +107,7 @@ const routes: Route[] = [
       const result = db.run(
         `INSERT INTO livros (numero_registro, isbn, titulo, autor_id, data_catalogacao)
          VALUES (?, ?, ?, ?, ?)`,
-        [numeroRegistro, body.isbn, body.titulo, body.autorId, hoje],
+        [numeroRegistro, isbn, titulo, autorId, hoje],
       );
 
       const livro = db
@@ -121,9 +123,7 @@ const routes: Route[] = [
     handler: (_request, params) => {
       const q = params.q!;
 
-      const porIsbn = db
-        .query("SELECT * FROM livros WHERE isbn = ?")
-        .all(q);
+      const porIsbn = db.query("SELECT * FROM livros WHERE isbn = ?").all(q);
 
       if (porIsbn.length > 0) return Response.json(porIsbn);
 
