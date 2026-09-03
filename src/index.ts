@@ -37,10 +37,38 @@ const routes: Route[] = [
     pattern: "/",
     handler: () => Response.json({ message: "API da Biblioteca" }),
   },
-  {
-    method: "GET",
-    pattern: "/",
-    handler: () => Response.json({ message: "API da Biblioteca" }),
+    {
+    method: "POST",
+    pattern: "/livros",
+    handler: async (request) => {
+      const body = (await request.json()) as {
+        isbn: string;
+        titulo: string;
+        autorId: number;
+        numeroRegistro: string;
+        dataCatalogacao: string;
+      };
+
+      const autor = db
+        .query("SELECT * FROM autores WHERE id = ?")
+        .get(body.autorId);
+
+      if (!autor) {
+        return Response.json({ error: "Autor não cadastrado" }, { status: 404 });
+      }
+
+      const result = db.run(
+        `INSERT INTO livros (numero_registro, isbn, titulo, autor_id, data_catalogacao)
+         VALUES (?, ?, ?, ?, ?)`,
+        [body.numeroRegistro, body.isbn, body.titulo, body.autorId, body.dataCatalogacao],
+      );
+
+      const livro = db
+        .query("SELECT * FROM livros WHERE id = ?")
+        .get(result.lastInsertRowid as number);
+
+      return Response.json(livro, { status: 201 });
+    },
   },
   {
     method: "GET",
