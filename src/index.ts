@@ -37,7 +37,7 @@ const routes: Route[] = [
     pattern: "/",
     handler: () => Response.json({ message: "API da Biblioteca" }),
   },
-    {
+  {
     method: "POST",
     pattern: "/livros",
     handler: async (request) => {
@@ -48,14 +48,6 @@ const routes: Route[] = [
         numeroRegistro: string;
         dataCatalogacao: string;
       };
-
-      const autor = db
-        .query("SELECT * FROM autores WHERE id = ?")
-        .get(body.autorId);
-
-      if (!autor) {
-        return Response.json({ error: "Autor não cadastrado" }, { status: 404 });
-      }
 
       const result = db.run(
         `INSERT INTO livros (numero_registro, isbn, titulo, autor_id, data_catalogacao)
@@ -74,29 +66,11 @@ const routes: Route[] = [
     method: "GET",
     pattern: "/livros/:q",
     handler: (_request, params) => {
-      const q = params.q!;
-
-      const porIsbn = db
+      const livros = db
         .query("SELECT * FROM livros WHERE isbn = ?")
-        .all(q);
+        .all(params.q!);
 
-      if (porIsbn.length > 0) return Response.json(porIsbn);
-
-      const porTitulo = db
-        .query("SELECT * FROM livros WHERE titulo LIKE ?")
-        .all(`%${q}%`);
-
-      if (porTitulo.length > 0) return Response.json(porTitulo);
-
-      const porAutor = db
-        .query(
-          `SELECT livros.* FROM livros
-             JOIN autores ON autores.id = livros.autor_id
-            WHERE autores.nome LIKE ?`,
-        )
-        .all(`%${q}%`);
-
-      return Response.json(porAutor);
+      return Response.json(livros);
     },
   },
 ];
