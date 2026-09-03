@@ -38,35 +38,19 @@ const routes: Route[] = [
     handler: () => Response.json({ message: "API da Biblioteca" }),
   },
   {
-    // rota descartável: existe só para provarmos a captura de parâmetros.
-    // Some na fase 10, quando a primeira rota de verdade com parâmetro chegar.
     method: "GET",
-    pattern: "/eco/:mensagem",
-    handler: (_request, params) => Response.json({ eco: params.mensagem }),
+    pattern: "/",
+    handler: () => Response.json({ message: "API da Biblioteca" }),
   },
   {
-    method: "POST",
-    pattern: "/livros",
-    handler: async (request) => {
-      const body = (await request.json()) as {
-        isbn: string;
-        titulo: string;
-        autorId: number;
-        numeroRegistro: string;
-        dataCatalogacao: string;
-      };
+    method: "GET",
+    pattern: "/livros/:q",
+    handler: (_request, params) => {
+      const livros = db
+        .query("SELECT * FROM livros WHERE isbn = ?")
+        .all(params.q!);
 
-      const result = db.run(
-        `INSERT INTO livros (numero_registro, isbn, titulo, autor_id, data_catalogacao)
-         VALUES (?, ?, ?, ?, ?)`,
-        [body.numeroRegistro, body.isbn, body.titulo, body.autorId, body.dataCatalogacao],
-      );
-
-      const livro = db
-        .query("SELECT * FROM livros WHERE id = ?")
-        .get(result.lastInsertRowid as number);
-
-      return Response.json(livro, { status: 201 });
+      return Response.json(livros);
     },
   },
 ];
