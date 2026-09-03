@@ -57,6 +57,7 @@ const routes: Route[] = [
         id: number;
         nome: string;
         orcid: string | null;
+        tipo: string;
       } | null;
 
       if (!autor) {
@@ -70,9 +71,12 @@ const routes: Route[] = [
         .query("SELECT COUNT(*) AS total FROM livros WHERE autor_id = ?")
         .get(autorId) as { total: number };
 
-      if (livrosDoAutor.total >= 3) {
+      const noAcervo = livrosDoAutor.total;
+      const limite = autor.tipo === "didatico" ? 10 : 5;
+
+      if (noAcervo >= limite) {
         return Response.json(
-          { error: "O autor já tem 3 livros no acervo" },
+          { error: `O autor já tem ${limite} livros no acervo` },
           { status: 409 },
         );
       }
