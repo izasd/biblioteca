@@ -1,4 +1,4 @@
-import { asObject, positiveInt, text } from "../../shared/validation";
+import { asObject, positiveInt, text } from "../../../../shared/validation";
 
 export type NovoLivro = {
   isbn: string;
